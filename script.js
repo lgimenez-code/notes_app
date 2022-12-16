@@ -4,8 +4,8 @@ const addBox = document.querySelector('.add-box'),
       closeIcon = popupBox.querySelector('header i'),
       titleTag = popupBox.querySelector('input'),
       descTag = popupBox.querySelector('textarea'),
+      dateTag = popupBox.querySelector('span'),
       addBtn = popupBox.querySelector('button');
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 let isUpdate = false,
     updateId;
 
@@ -26,34 +26,37 @@ addBox.addEventListener('click', () => {
 
 closeIcon.addEventListener('click', () => {
   isUpdate = false;
-  titleTag.value = descTag.value = '';
+  titleTag.value = descTag.value = dateTag.innerText = '';
   popupBox.classList.remove('show');
   document.querySelector('body').style.overflow = 'auto';
 });
 
 addBtn.addEventListener('click', e => {
   e.preventDefault();
+  let currentDate = new Date(),
+      formattedCurrentDate = `${currentDate.toLocaleDateString()} ${currentDate.toLocaleTimeString()}hs.`;
+
   let title = titleTag.value.trim(),
-      description = descTag.value.trim();
-  
-  if (title || description) {
-    let currentDate = new Date(),
-        month = months[currentDate.getMonth()],
-        day = currentDate.getDate(),
-        year = currentDate.getFullYear();
-    
-    let noteInfo = { title, description, date: `${month} ${day}, ${year}` };
-    if (!isUpdate) {
-      notes.push(noteInfo);
-    } else {
-      isUpdate = false;
-      notes[updateId] = noteInfo;
-    }
-    // save data from database
-    localStorage.setItem('notes', JSON.stringify(notes));
-    showNotes();
-    closeIcon.click();
+      description = descTag.value.trim(),
+      dateCreated = dateTag.innerText !== '' ? dateTag.innerText : formattedCurrentDate;
+
+  if (!title.trim() || !description.trim()) {
+    alert('You must enter the description and the title!');
+    return false;
   }
+
+  let noteInfo = { title, description, dateCreated };
+  if (!isUpdate) {
+    notes.push(noteInfo);
+  } else {
+    noteInfo.dateModified = formattedCurrentDate;
+    isUpdate = false;
+    notes[updateId] = noteInfo;
+  }
+  // save data from database
+  localStorage.setItem('notes', JSON.stringify(notes));
+  showNotes();
+  closeIcon.click();
 });
 
 
@@ -64,18 +67,24 @@ const showNotes = function () {
   }
   document.querySelectorAll('.note').forEach(li => li.remove());
   notes.forEach((note, id) => {
-    let filterDesc = note.description.replaceAll('\n', '<br/>');
+    let filterDesc = note.description.replaceAll('\n', '<br/>'),
+        objNote = encodeURI(JSON.stringify(note));
+        console.log(note);
+
     let liTag = `<li class="note">
                   <div class="details">
                     <p>${note.title}</p>
                     <span>${filterDesc}</span>
                   </div>
                   <div class="bottom-content">
-                    <span>${note.date}</span>
+                    <div>
+                      <span>${note.dateCreated || '&nbsp;'}</span>
+                      <span>${note.dateModified || '&nbsp;'}</span>
+                    </div>
                     <div class="settings">
                       <i onclick="showMenu(this)" class="uil uil-ellipsis-h"></i>
                       <ul class="menu">
-                        <li onclick="updateNote(${id}, '${note.title}', '${filterDesc}')"><i class="uil uil-pen"></i>Edit</li>
+                        <li onclick="updateNote(${id}, '${objNote}')"><i class="uil uil-pen"></i>Edit</li>
                         <li onclick="deleteNote(${id})"><i class="uil uil-trash"></i>Delete</li>
                       </ul>
                     </div>
@@ -104,16 +113,17 @@ const deleteNote = function (id) {
   showNotes();
 }
 
-const updateNote = function (id, title, filterDesc) {
-  let description = filterDesc.replaceAll('<br/>', '\r\n');
+const updateNote = function (id, note) {
+  let objNote = JSON.parse(decodeURI(note));
   updateId = id;
   isUpdate = !isUpdate;
   addBox.click();
-  titleTag.value = title;
-  descTag.value = description;
+  titleTag.value = objNote.title;
+  descTag.value = objNote.description;
+  dateTag.innerText = objNote.dateCreated;
   popupTitle.innerText = 'Update a Note';
   addBtn.innerText = 'Update Note';
 }
 
-// 
+// show grid data
 showNotes();
