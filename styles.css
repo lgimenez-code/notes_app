@@ -96,7 +96,8 @@ header,
   padding-top: 10px;
   border-top: 1px solid #CCC;
 }
-.bottom-content span {
+.bottom-content span,
+.popup-box form span.dateCreated {
   color: #6D6D6D;
   font-size: 14px;
 }
@@ -107,6 +108,9 @@ header,
   color: #6D6D6D;
   cursor: pointer;
   font-size: 15px;
+}
+.popup-box form span.dateCreated {
+  float: right;
 }
 .settings .menu {
   z-index: 1;
